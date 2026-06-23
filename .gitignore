@@ -1,0 +1,11 @@
+node_modules/
+.remotion/
+
+# Node / Remotion
+
+node_modules/
+
+.remotion/
+
+node_modules/.remotion/
+
