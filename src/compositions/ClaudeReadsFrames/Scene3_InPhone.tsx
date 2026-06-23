@@ -49,7 +49,7 @@ import { Scene2_ClaudeUnderstands } from './Scene2_ClaudeUnderstands';
  *
  * Exactly one mode is active. There is no transition between them.
  */
-const SHOW_VIDEO = true;
+const SHOW_VIDEO = false;
 
 /**
  * Which scene to display when SHOW_VIDEO = false.

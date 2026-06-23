@@ -1,5 +1,5 @@
 import React from 'react';
-import { useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
+import { useCurrentFrame, useVideoConfig, interpolate, Easing } from 'remotion';
 import { fadeOut, sp, blurFade } from '../../common/utils';
 import { SceneCanvas, PastelBackground, SAFE_H } from '../../common/components';
 import { FONT_HEAD, FONT_MONO } from '../../common/fonts';
@@ -159,9 +159,24 @@ export const SceneYouTubeExample: React.FC = () => {
   const ytSp    = sp(frame, fps, 55, { stiffness: 60, damping: 14 });
   const thumbSp = sp(frame, fps, 66, { stiffness: 58, damping: 14 });
 
-  // View count
+  // View count container (fade/scale in)
   const countSp    = sp(frame, fps,  88, { stiffness: 65, damping: 15 });
   const subLabelSp = sp(frame, fps, 108, { stiffness: 60, damping: 14 });
+
+  // ── Animated counter: 10,000 → 5,247,169 ─────────────────────────────────
+  // Explosive easing: crawls at first, then numbers fly past, settles at end
+  const COUNT_FINAL = 5_247_169;
+  const countT = interpolate(frame, [88, 232], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+    easing: Easing.bezier(0.08, 0.0, 0.02, 1.0),  // slow → explosive → settle
+  });
+  const baseCount = 10_000 + countT * (COUNT_FINAL - 10_000);
+  // Jitter: multi-frequency noise that decays as counter approaches final value
+  const jitterAmp = interpolate(countT, [0, 0.55, 0.82, 1.0], [0, 0.18, 0.05, 0]);
+  const jitter    = (Math.sin(frame * 3.14) * 0.55 + Math.sin(frame * 8.31) * 0.30 + Math.sin(frame * 17.7) * 0.15) * jitterAmp;
+  const viewCount = Math.max(10_000, Math.round(baseCount * (1 + jitter)));
+  const fmtCount  = viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
   // VIRAL stamps — staggered every 14 frames
   const v1Sp = sp(frame, fps, 122, { stiffness: 64, damping: 13 });
@@ -279,7 +294,7 @@ export const SceneYouTubeExample: React.FC = () => {
         filter: blurFade(countSp, 14),
       }}>
         <span style={{ fontSize: 104, fontWeight: 900, fontFamily: FONT_MONO, color: BLACK, letterSpacing: '-3px', lineHeight: 1 }}>
-          1,247,169
+          {fmtCount}
         </span>
       </div>
 
