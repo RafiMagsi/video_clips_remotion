@@ -4,6 +4,9 @@
 //    import { GlassPanel, NeuralLine, WaveBackground } from '../../common/components';
 // ─────────────────────────────────────────────────────────────────────────────
 
+export { SceneCanvas }           from './SceneCanvas';
+export type { SceneCanvasProps } from './SceneCanvas';
+export { SAFE_H, SAFE_TOP, SAFE_BOTTOM } from './SceneCanvas';
 export { SharedSVGDefs }         from './SharedSVGDefs';
 export { PastelBackground }      from './PastelBackground';
 export { WaveBackground }        from './WaveBackground';

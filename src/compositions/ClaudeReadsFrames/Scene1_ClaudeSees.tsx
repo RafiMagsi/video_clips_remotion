@@ -8,7 +8,7 @@ import {
   staticFile,
 } from 'remotion';
 import { fadeOut, sp, blurFade } from '../../common/utils';
-import { PastelBackground } from '../../common/components';
+import { SceneCanvas, PastelBackground } from '../../common/components';
 import { FONT_HEAD, FONT_MONO } from '../../common/fonts';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,10 +84,7 @@ export const Scene1_ClaudeSees: React.FC = () => {
   const logoTop  = logoCY - LOGO_SIZE / 2;
 
   return (
-    <AbsoluteFill style={{ opacity: sceneOp, overflow: 'hidden' }}>
-
-      {/* ── Pastel background ─────────────────────────────────────────────── */}
-      <PastelBackground />
+    <SceneCanvas opacity={sceneOp} background={<PastelBackground />}>
 
       {/* ── Dynamic orange glow (SVG layer — stays below the icon) ───────── */}
       <svg
@@ -268,6 +265,6 @@ export const Scene1_ClaudeSees: React.FC = () => {
         </div>
       </div>
 
-    </AbsoluteFill>
+    </SceneCanvas>
   );
 };

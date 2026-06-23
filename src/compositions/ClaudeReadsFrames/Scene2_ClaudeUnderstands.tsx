@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  AbsoluteFill,
   useCurrentFrame,
   useVideoConfig,
   interpolate,
@@ -8,7 +7,7 @@ import {
   staticFile,
 } from 'remotion';
 import { fade, fadeOut, sp, blurFade } from '../../common/utils';
-import { PastelBackground } from '../../common/components';
+import { SceneCanvas, PastelBackground, SAFE_H } from '../../common/components';
 import { FONT_HEAD, FONT_MONO } from '../../common/fonts';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,13 +50,13 @@ const BLACK  = '#0A0A0A';
 const MINI_SIZE = 190;
 
 // ── Film card — full width, centered, at top of content ──────────────────────
-const VX = 52, VY = 680, VW = 976, VH = 292;
+const VX = SAFE_H, VY = 680, VW = 1080 - 2 * SAFE_H, VH = 292;
 
 // ── Claude circle — centered, below film card ─────────────────────────────────
 const CCX = 540, CCY = 1108, CCR = 112;
 
 // ── Code output card — below Claude circle ────────────────────────────────────
-const CX = 52, CY = 1272, CW = 976, CH = 134;
+const CX = SAFE_H, CY = 1272, CW = 1080 - 2 * SAFE_H, CH = 134;
 const CLAUDE_SEES_TEXT = "[00:58] Title card: 'How it works'.";
 
 // ── Timestamp ticker ──────────────────────────────────────────────────────────
@@ -123,10 +122,7 @@ export const Scene2_ClaudeUnderstands: React.FC = () => {
   const tickerOp        = fade(frame, 66, 84);
 
   return (
-    <AbsoluteFill style={{ opacity: sceneOp, overflow: 'hidden' }}>
-
-      {/* ── Same pastel background as Scene 1 ─────────────────────────────── */}
-      <PastelBackground />
+    <SceneCanvas opacity={sceneOp} background={<PastelBackground />}>
 
       {/* ── SVG layer ──────────────────────────────────────────────────────── */}
       <svg
@@ -169,7 +165,7 @@ export const Scene2_ClaudeUnderstands: React.FC = () => {
             <stop offset="100%" stopColor="white" stopOpacity="0"/>
           </linearGradient>
           <mask id="s2-ticker-mask">
-            <rect x={52} y={TS_Y - 10} width={976} height={TS_H + 20}
+            <rect x={SAFE_H} y={TS_Y - 10} width={1080 - 2 * SAFE_H} height={TS_H + 20}
               fill="url(#s2-ticker-mask-grad)"/>
           </mask>
         </defs>
@@ -313,7 +309,7 @@ export const Scene2_ClaudeUnderstands: React.FC = () => {
         {/* ─────────────────────────────────────────────────────────────────── */}
         <g opacity={tickerOp} mask="url(#s2-ticker-mask)">
           {[...TIMESTAMPS, ...TIMESTAMPS].map((ts, i) => {
-            const chipX   = 52 + i * CHIP_UNIT - tickerScroll;
+            const chipX   = SAFE_H + i * CHIP_UNIT - tickerScroll;
             const isActive = i % TIMESTAMPS.length === ACTIVE_TS;
             return (
               <g key={`chip-${i}`}>
@@ -359,9 +355,9 @@ export const Scene2_ClaudeUnderstands: React.FC = () => {
 
       {/* ── HTML headlines (blur-in + slide, left-aligned) ─────────────────── */}
 
-      {/* Line 1: "Claude reads. Claude" */}
+      {/* Line 1: "Claude reads." */}
       <div style={{
-        position: 'absolute', top: 384, left: 52, right: 52,
+        position: 'absolute', top: 384, left: SAFE_H, right: SAFE_H,
         opacity: lineOp(l1Sp),
         transform: `translateY(${lineY(l1Sp)}px)`,
         filter: blurFade(l1Sp, 10),
@@ -371,13 +367,13 @@ export const Scene2_ClaudeUnderstands: React.FC = () => {
           fontSize: 84, fontWeight: 900, color: BLACK, lineHeight: 1.04,
           fontFamily: FONT_HEAD, letterSpacing: '-2.2px', display: 'block',
         }}>
-          Claude reads. Claude
+          Claude reads.
         </span>
       </div>
 
-      {/* Line 2: "watches." in ORANGE */}
+      {/* Line 2: "Claude watches." in ORANGE */}
       <div style={{
-        position: 'absolute', top: 472, left: 52, right: 52,
+        position: 'absolute', top: 472, left: SAFE_H, right: SAFE_H,
         opacity: lineOp(l2Sp),
         transform: `translateY(${lineY(l2Sp)}px)`,
         filter: blurFade(l2Sp, 10),
@@ -387,13 +383,13 @@ export const Scene2_ClaudeUnderstands: React.FC = () => {
           fontSize: 84, fontWeight: 900, color: ORANGE, lineHeight: 1.04,
           fontFamily: FONT_HEAD, letterSpacing: '-2.2px', display: 'block',
         }}>
-          watches.
+          Claude watches.
         </span>
       </div>
 
       {/* Line 3: "Same time." in black */}
       <div style={{
-        position: 'absolute', top: 560, left: 52, right: 52,
+        position: 'absolute', top: 560, left: SAFE_H, right: SAFE_H,
         opacity: lineOp(l3Sp),
         transform: `translateY(${lineY(l3Sp)}px)`,
         filter: blurFade(l3Sp, 10),
@@ -407,6 +403,6 @@ export const Scene2_ClaudeUnderstands: React.FC = () => {
         </span>
       </div>
 
-    </AbsoluteFill>
+    </SceneCanvas>
   );
 };

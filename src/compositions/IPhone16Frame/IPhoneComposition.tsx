@@ -12,7 +12,7 @@ import { getVideoMetadata } from '@remotion/media-utils';
 import { IPhone16Frame, PHONE_W, PHONE_H, SCR_X, SCR_Y, SCR_W, SCR_H } from './IPhone16Frame';
 import { Title }         from './Title';
 import { PhoneScreen }   from './PhoneScreen';
-import { WaveBackground } from '../../common/components';
+import { SceneCanvas, WaveBackground } from '../../common/components';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  IPhoneComposition — iPhone 16 device mockup playing a video
@@ -87,7 +87,7 @@ export const IPhoneComposition: React.FC = () => {
   const phoneLeft     = (W - phoneDisplayW) / 2;
 
   return (
-    <AbsoluteFill style={{ overflow: 'hidden' }}>
+    <SceneCanvas>
 
       {/* Aurora background */}
       {!OVERLAY_MODE && <WaveBackground/>}
@@ -168,6 +168,6 @@ export const IPhoneComposition: React.FC = () => {
         </div>
       </div>
 
-    </AbsoluteFill>
+    </SceneCanvas>
   );
 };

@@ -9,7 +9,7 @@ import {
   staticFile,
 } from 'remotion';
 import { fadeOut } from '../../common/utils';
-import { PastelBackground } from '../../common/components';
+import { SceneCanvas, PastelBackground } from '../../common/components';
 import {
   IPhone16Frame,
   PHONE_W, PHONE_H,
@@ -105,10 +105,7 @@ export const Scene3_InPhone: React.FC = () => {
   const bob     = frame > 22 ? Math.sin((t - 22 / fps) * Math.PI * 0.22) * 10 : 0;
 
   return (
-    <AbsoluteFill style={{ opacity: sceneOp, overflow: 'hidden' }}>
-
-      {/* ── Shared pastel background (same as Scene 1 & 2) ───────────────── */}
-      <PastelBackground />
+    <SceneCanvas opacity={sceneOp} background={<PastelBackground />}>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
       {/*  DROPTICKS BRANDING — exact same Title as IPhone16Frame            */}
@@ -234,6 +231,6 @@ export const Scene3_InPhone: React.FC = () => {
         </div>
       </div>
 
-    </AbsoluteFill>
+    </SceneCanvas>
   );
 };

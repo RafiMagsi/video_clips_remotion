@@ -6,7 +6,7 @@ import {
   interpolate,
 } from 'remotion';
 import { sp, blurFade, fadeOut } from '../../common/utils';
-import { PastelBackground } from '../../common/components';
+import { SceneCanvas, PastelBackground, SAFE_H } from '../../common/components';
 import { FONT_HEAD } from '../../common/fonts';
 import { Title } from '../IPhone16Frame/Title';
 
@@ -203,9 +203,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
   const cursorOn = Math.floor(frame / 16) % 2 === 0;
 
   return (
-    <AbsoluteFill style={{ opacity: sceneOp, overflow: 'hidden' }}>
-
-      <PastelBackground />
+    <SceneCanvas opacity={sceneOp} background={<PastelBackground />}>
 
       {/* ── Sparkles + glow halo ──────────────────────────────────────────── */}
       <svg
@@ -247,7 +245,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
       {/* ── DropTicks logo card ───────────────────────────────────────────── */}
       <div style={{
         position: 'absolute',
-        top: 245, left: 106, right: 106,
+        top: 245, left: SAFE_H, right: SAFE_H,
         display: 'flex', justifyContent: 'center',
         opacity: logoOp,
         transform: `translateY(${logoY}px) scale(${logoSc})`,
@@ -272,7 +270,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
 
       {/* ── Headline: "Follow &" ──────────────────────────────────────────── */}
       <div style={{
-        position: 'absolute', top: 460, left: 106, right: 106,
+        position: 'absolute', top: 460, left: SAFE_H, right: SAFE_H,
         opacity: lineOp(l1Sp),
         transform: `translateY(${lineY(l1Sp)}px)`,
         filter: blurFade(l1Sp, 14),
@@ -288,7 +286,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
 
       {/* ── Headline: "Subscribe." gradient ──────────────────────────────── */}
       <div style={{
-        position: 'absolute', top: 548, left: 106, right: 106,
+        position: 'absolute', top: 548, left: SAFE_H, right: SAFE_H,
         opacity: lineOp(l2Sp),
         transform: `translateY(${lineY(l2Sp)}px)`,
         filter: blurFade(l2Sp, 14),
@@ -310,7 +308,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
 
       {/* ── Subtitle ─────────────────────────────────────────────────────── */}
       <div style={{
-        position: 'absolute', top: 648, left: 106, right: 106,
+        position: 'absolute', top: 648, left: SAFE_H, right: SAFE_H,
         opacity: lineOp(l3Sp),
         transform: `translateY(${lineY(l3Sp)}px)`,
         filter: blurFade(l3Sp, 8),
@@ -323,7 +321,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
 
       {/* ── Animated accent underline ─────────────────────────────────────── */}
       <div style={{
-        position: 'absolute', top: 706, left: 106,
+        position: 'absolute', top: 706, left: SAFE_H,
         height: 5, borderRadius: 3,
         width: accentW,
         opacity: accentOp,
@@ -333,7 +331,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
 
       {/* ── CTA Card 1: Subscribe on YouTube (slides from LEFT) ──────────── */}
       <div style={{
-        position: 'absolute', top: 750, left: 106, right: 106,
+        position: 'absolute', top: 750, left: SAFE_H, right: SAFE_H,
         opacity: c1Op,
         transform: `translateX(${c1X}px) scale(${c1Sc})`,
         pointerEvents: 'none',
@@ -361,7 +359,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
 
       {/* ── CTA Card 2: Follow on Instagram (slides from RIGHT) ──────────── */}
       <div style={{
-        position: 'absolute', top: 916, left: 106, right: 106,
+        position: 'absolute', top: 916, left: SAFE_H, right: SAFE_H,
         opacity: c2Op,
         transform: `translateX(${c2X}px) scale(${c2Sc})`,
         pointerEvents: 'none',
@@ -399,7 +397,7 @@ export const Scene4_FollowSubscribe: React.FC = () => {
 
       {/* ── CTA Card 3: Comment (rises from BELOW) ───────────────────────── */}
       <div style={{
-        position: 'absolute', top: 1082, left: 106, right: 106,
+        position: 'absolute', top: 1082, left: SAFE_H, right: SAFE_H,
         opacity: c3Op,
         transform: `translateY(${c3Yd}px) scale(${c3Sc})`,
         pointerEvents: 'none',
@@ -474,6 +472,6 @@ export const Scene4_FollowSubscribe: React.FC = () => {
         </span>
       </div>
 
-    </AbsoluteFill>
+    </SceneCanvas>
   );
 };
