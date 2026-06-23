@@ -1,60 +1,61 @@
 import React from 'react';
 import { AbsoluteFill, Sequence } from 'remotion';
 import { Scene1_ClaudeSees }        from './Scene1_ClaudeSees';
+import { SceneTerminal_Watch }      from './SceneTerminal_Watch';
 import { Scene2_ClaudeUnderstands } from './Scene2_ClaudeUnderstands';
 import { Scene3_InPhone }           from './Scene3_InPhone';
 import { Scene4_FollowSubscribe }   from './Scene4_FollowSubscribe';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  ClaudeReadsFrames — Main composition  (1200 frames = 40 s @ 30 fps)
-//
-//  Design language: light editorial  (matches reference video from DeviniLabs)
-//  Background: soft pastel gradient — cream/lavender base, warm orange glow
-//              behind logo, cool lavender upper-right, 28 floating particles,
-//              frosted-glass squares at edges
+//  ClaudeReadsFrames — Main composition  (1500 frames = 50 s @ 30 fps)
 //
 //  Scene 1  (frames   0–299, 10 s):
 //    "Claude now watches video. Frame by frame."
-//    → claude-icon.png (rotates, floats up) + blur-in headline + pills
+//    rotating claude icon → blur-in headlines → pills → "Now Claude sees both."
 //
-//  Scene 2  (frames 288–587, ~10 s, 12-frame crossfade overlap):
+//  SceneTerminal  (frames 288–587, ~10 s, 12-frame crossfade overlap):
+//    "Give Claude the ability to watch."
+//    animated macOS terminal — /watch command types out, output streams in
+//    camera: 3D tilt → settles flat, then micro-drifts
+//
+//  Scene 2  (frames 576–875, ~10 s, 12-frame crossfade overlap):
 //    "Claude reads. Claude watches. Same time."
-//    → Film card + Claude icon + timestamp chips ticker
+//    film card + ticker chips + claude icon
 //
-//  Scene 3  (frames 576–875, ~10 s, 12-frame crossfade overlap):
-//    Phone in hand — video.mp4 plays inside iPhone 16 frame on pastel bg
-//    → DropTicks branding card above phone
+//  Scene 3  (frames 864–1163, ~10 s, 12-frame crossfade overlap):
+//    Phone in hand — video.mp4 plays inside iPhone 16 frame
 //
-//  Scene 4  (frames 864–1163, ~10 s, 12-frame crossfade overlap):
-//    "Follow & Subscribe." CTA scene
-//    → DropTicks AI logo card + headlines + comment card + platform pills
+//  Scene 4  (frames 1152–1451, ~10 s, 12-frame crossfade overlap):
+//    "Follow & Subscribe." CTA — platform cards
 //
-//  Each scene overlaps the previous by 12 frames for a natural crossfade:
-//    Scene N fades out over its last 15 frames.
-//    Scene N+1 fades in over its first 15 frames.
+//  All scenes share PastelBackground (animated glows, glitter, shooting stars)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ClaudeReadsFrames: React.FC = () => (
   <AbsoluteFill style={{ background: '#F5F0FF', overflow: 'hidden' }}>
 
-    {/* ── Scene 1 — frames 0–299 (10 s) ────────────────────────────────── */}
+    {/* ── Scene 1 — frames 0–299 (10 s) ─────────────────────────────────── */}
     <Sequence from={0} durationInFrames={300}>
       <Scene1_ClaudeSees />
     </Sequence>
 
-    {/* ── Scene 2 — frames 288–587 (~10 s, 12-frame crossfade) ─────────── */}
+    {/* ── Terminal scene — frames 288–587 (12-frame crossfade) ───────────── */}
     <Sequence from={288} durationInFrames={300}>
+      <SceneTerminal_Watch />
+    </Sequence>
+
+    {/* ── Scene 2 — frames 576–875 (12-frame crossfade) ──────────────────── */}
+    <Sequence from={576} durationInFrames={300}>
       <Scene2_ClaudeUnderstands />
     </Sequence>
 
-    {/* ── Scene 3 — frames 576–875 (~10 s, 12-frame crossfade) ─────────── */}
-    <Sequence from={576} durationInFrames={300}>
+    {/* ── Scene 3 — frames 864–1163 (12-frame crossfade) ─────────────────── */}
+    <Sequence from={864} durationInFrames={300}>
       <Scene3_InPhone />
     </Sequence>
 
-    {/* ── Scene 4 — frames 864–1163 (~10 s, 12-frame crossfade) ────────── */}
-    {/* "Follow & Subscribe." — DropTicks CTA with platform pills          */}
-    <Sequence from={864} durationInFrames={300}>
+    {/* ── Scene 4 — frames 1152–1451 (12-frame crossfade) ────────────────── */}
+    <Sequence from={1152} durationInFrames={300}>
       <Scene4_FollowSubscribe />
     </Sequence>
 
