@@ -5,7 +5,10 @@ import {
   useVideoConfig,
   interpolate,
   spring,
+  OffthreadVideo,
+  staticFile,
 } from "remotion";
+import { getVideoMetadata } from "@remotion/media-utils";
 import {
   IPhone16Frame,
   PHONE_W,
@@ -20,22 +23,46 @@ import { Title } from "./Title";
 import { WaveBackground } from "./WaveBackground";
 import { PhoneScreen } from "./PhoneScreen";
 
-// ─────────────────────────────────────────────────────────────────
-// CUSTOMIZE
-// ─────────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════
+//  CUSTOMIZE — edit these constants, nothing else needs changing
+// ═════════════════════════════════════════════════════════════════
+
+const FPS = 30;
+
+// ── Video ─────────────────────────────────────────────────────────
+// Drop your file at /public/video.mp4 then set SHOW_VIDEO = true.
+// Duration is detected automatically from the video file.
+const SHOW_VIDEO  = true;
+const VIDEO_FILE  = "video.mp4";
+
+// ── Overlay mode ──────────────────────────────────────────────────
+// Set true to export a transparent overlay (no background, no title).
+// Use this to layer the iPhone frame over footage in CapCut / DaVinci.
+// Render command:
+//   npx remotion render IPhone16Frame out/overlay.webm --transparent
+const OVERLAY_MODE = false;
+
+// ── Title text ────────────────────────────────────────────────────
 const SUBTITLE = "AI Tools & Automation for Businesses";
 
-/**
- * Add your video:
- * 1. Drop file at /public/video.mp4
- * 2. Set SHOW_VIDEO = true
- * 3. Replace <rect placeholder> with:
- *    import { OffthreadVideo, staticFile } from "remotion"
- *    <OffthreadVideo src={staticFile("video.mp4")}
- *      style={{width:"100%",height:"100%",objectFit:"cover"}} />
- */
-const SHOW_VIDEO = false;
-// ─────────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════
+
+// ── Auto-duration: reads actual video length so Remotion matches it ─
+export const calculateMetadata = async () => {
+  if (!SHOW_VIDEO) return {};
+  try {
+    // Build absolute URL so getVideoMetadata works in both Studio and render
+    const base =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "http://localhost:3000";
+    const { durationInSeconds } = await getVideoMetadata(`${base}/${VIDEO_FILE}`);
+    return { durationInFrames: Math.ceil(durationInSeconds * FPS) };
+  } catch (e) {
+    console.warn("[calculateMetadata] Could not read video duration:", e);
+    return {}; // Root.tsx durationInFrames={1320} is used as fallback
+  }
+};
 
 export const IPhoneComposition: React.FC = () => {
   const frame = useCurrentFrame();
@@ -49,6 +76,7 @@ export const IPhoneComposition: React.FC = () => {
   // Gentle float (1 full cycle per 10 s — loop-safe)
   const t   = frame / fps;
   const bob = frame > 20 ? Math.sin((t - 20 / fps) * Math.PI * 0.2) * 10 : 0;
+
 
   const titleOp = interpolate(frame, [0, 12], [0, 1], { extrapolateRight: "clamp" });
 
@@ -69,23 +97,25 @@ export const IPhoneComposition: React.FC = () => {
   return (
     <AbsoluteFill style={{ overflow: "hidden" }}>
 
-      {/* ── WAVE BACKGROUND ── */}
-      <WaveBackground />
+      {/* ── WAVE BACKGROUND (hidden in overlay mode) ── */}
+      {!OVERLAY_MODE && <WaveBackground />}
 
-      {/* ── TITLE (compact, safe zone top) ── */}
-      <div style={{
-        position: "absolute",
-        top: SAFE_TOP, left: 0, right: 0,
-        height: TITLE_H,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        paddingLeft: 50,
-        paddingRight: 50,
-        opacity: titleOp,
-      }}>
-        <Title subtitle={SUBTITLE} />
-      </div>
+      {/* ── TITLE (hidden in overlay mode) ── */}
+      {!OVERLAY_MODE && (
+        <div style={{
+          position: "absolute",
+          top: SAFE_TOP, left: 0, right: 0,
+          height: TITLE_H,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingLeft: 50,
+          paddingRight: 50,
+          opacity: titleOp,
+        }}>
+          <Title subtitle={SUBTITLE} />
+        </div>
+      )}
 
       {/* ── IPHONE FRAME (maximised) ── */}
       <div style={{
@@ -111,14 +141,29 @@ export const IPhoneComposition: React.FC = () => {
             {/* ── REAL VIDEO (set SHOW_VIDEO = true) ── */}
             {SHOW_VIDEO && (
               <foreignObject x={SCR_X} y={SCR_Y} width={SCR_W} height={SCR_H}>
-                {/* Replace with:
-                    import { OffthreadVideo, staticFile } from "remotion"
-                    <OffthreadVideo src={staticFile("video.mp4")}
-                      style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                */}
-                <div style={{ width: "100%", height: "100%", background: "#040C22" }} />
+                <OffthreadVideo
+                  src={staticFile(VIDEO_FILE)}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
               </foreignObject>
             )}
+
+            {/* ── STATUS BAR BACKGROUND ────────────────────────────
+                Solid dark rect covers the video's own status bar
+                and any red recording indicator from the footage.
+                Height 100px = ~66pt in iPhone coords — clears the
+                full iOS status bar + Dynamic Island area.
+            ──────────────────────────────────────────────────── */}
+            <rect
+              x={SCR_X} y={SCR_Y}
+              width={SCR_W} height={70}
+              fill="rgba(0,2,8,0.92)"
+            />
 
             {/* ── STATUS BAR (drawn above screen content) ── */}
             {/* DI pill: x 285–415, y 27–65, centre-y = 46. All items centred on y=46. */}

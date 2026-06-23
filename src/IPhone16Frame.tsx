@@ -32,9 +32,9 @@ export const IPhone16Frame: React.FC<IPhone16FrameProps> = ({ children }) => (
     style={{
       overflow: "visible",
       filter: [
-        "drop-shadow(0 2px 3px rgba(0,0,0,0.28))",
-        "drop-shadow(0 18px 45px rgba(0,0,0,0.55))",
-        "drop-shadow(0 50px 100px rgba(0,0,0,0.28))",
+        "drop-shadow(0 2px 4px rgba(0,0,0,0.35))",
+        "drop-shadow(0 22px 55px rgba(0,0,0,0.65))",
+        "drop-shadow(0 60px 120px rgba(0,0,0,0.30))",
       ].join(" "),
     }}
   >
