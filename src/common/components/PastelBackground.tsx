@@ -39,44 +39,44 @@ const PARTICLES: Particle[] = Array.from({ length: PARTICLE_COUNT }, (_, i) => {
   };
 });
 
-const SQUARES = [
-  { x: -22, y: 148,  s: 44, phase: 0.00 },
-  { x: -28, y: 380,  s: 56, phase: 1.15 },
-  { x: -24, y: 760,  s: 48, phase: 0.55 },
-  { x: -20, y: 1060, s: 44, phase: 1.82 },
-  { x: -26, y: 1400, s: 52, phase: 0.80 },
-  { x: -48, y: 122,  s: 88, phase: 2.20, right: true },
-  { x: -44, y: 520,  s: 46, phase: 1.52, right: true },
-  { x: -50, y: 900,  s: 52, phase: 0.28, right: true },
-  { x: -46, y: 1240, s: 48, phase: 1.94, right: true },
-  { x: -42, y: 1540, s: 44, phase: 2.62, right: true },
-] as const;
+// Frosted squares — lifecycle: spawn → fade-in → bob → fade-out → respawn elsewhere
+// Canvas divided into a 2×5 grid (10 cells) so boxes never crowd each other.
+const SQ_COUNT  = 10;
+const SQ_FADE   = 18;                      // frames to fade in / out
+const SQ_LIFE   = 104;                     // frames fully visible
+const SQ_TOTAL  = SQ_FADE * 2 + SQ_LIFE;  // 140 frames per cycle (~4.7 s)
+const SQ_COLS   = 2;                       // grid: 2 cols × 5 rows = 10 cells
+const SQ_ROWS   = 5;
+// Stable bob-phase per box (never changes between cycles)
+const SQ_PHASES = Array.from({ length: SQ_COUNT }, (_, i) => rng(i * 13 + 4) * Math.PI * 2);
 
 // ── Asteroid shooting stars ───────────────────────────────────────────────────
 // Shape: narrow pointed tail → wide glowing head (comet/asteroid silhouette)
 // Rendered with SVG path + radial gradient head + feGaussianBlur glow layers
 const STAR_CYCLE = 120;  // frames between star A and star A again
 const STAR_DUR   = 28;   // frames to cross the screen
-const TAIL_LEN   = 280;  // px length of the tail
+const TAIL_LEN   = 680;  // px — long sweeping tail
+// Head rendered as stacked soft-blur circles (like the Claude icon glow),
+// no sharp bright core. tailHalfW controls how wide the tail is at the head.
 
-interface StarDef {
+// Static appearance config per star — positions are randomised per cycle
+interface StarConfig {
+  offset:     number;
+  colorInner: string;
+  colorOuter: string;
+  tailHalfW:  number;
+  ltr:        boolean;   // true = left→right,  false = right→left
+}
+const STAR_CONFIGS: StarConfig[] = [
+  { offset: 18, colorInner: '#FF9040', colorOuter: '#FFE4B8', tailHalfW: 36, ltr: true  },
+  { offset: 68, colorInner: '#FFAA55', colorOuter: '#FFF4E0', tailHalfW: 32, ltr: false },
+];
+
+// Full star definition (computed per cycle inside the component)
+interface StarDef extends StarConfig {
   sx: number; sy: number;
   ex: number; ey: number;
-  offset: number;
-  colorCore: string;   // bright inner core
-  colorGlow: string;   // outer halo
-  tailHalfW: number;   // half-width of tail at the head end (px)
 }
-const STARS: StarDef[] = [
-  { sx: -80, sy: 260, ex: 1160, ey: 820,
-    offset: 18,
-    colorCore: '#FFE4B8', colorGlow: '#FF9040',
-    tailHalfW: 18 },
-  { sx: 1140, sy: 160, ex: 160, ey: 1140,
-    offset: 68,
-    colorCore: '#FFF4E0', colorGlow: '#FFAA55',
-    tailHalfW: 16 },
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -92,7 +92,24 @@ export const PastelBackground: React.FC = () => {
   const lavCX      = 950 + Math.sin(t * Math.PI * 0.17)         * 32;
   const lavCY      = 340 + Math.sin(t * Math.PI * 0.11 + 0.60)  * 22;
 
-  const cycle = frame % STAR_CYCLE;
+  // ── Per-cycle random asteroid paths ──────────────────────────────────────
+  // cycleIdx increments every 120 frames, re-seeding both asteroids with fresh
+  // random Y positions and vertical drift so each pass looks different.
+  const cycleIdx = Math.floor(frame / STAR_CYCLE);
+  const cycle    = frame % STAR_CYCLE;
+
+  // Build full StarDef for this cycle — only sx/ex are fixed (direction),
+  // sy and ey are seeded random within the visible canvas height (160–1620).
+  const STARS: StarDef[] = STAR_CONFIGS.map((cfg, si) => {
+    const seed = cycleIdx * 17 + si * 8;   // unique seed per star per cycle
+    return {
+      ...cfg,
+      sx: cfg.ltr ? -140 : 1220,
+      sy: 160 + rng(seed + 0) * 1380,      // random start Y
+      ex: cfg.ltr ? 1220 : -140,
+      ey: 160 + rng(seed + 1) * 1380,      // random end Y (different → diagonal drift)
+    };
+  });
 
   return (
     <AbsoluteFill style={{ pointerEvents: 'none' }}>
@@ -152,16 +169,55 @@ export const PastelBackground: React.FC = () => {
           return <circle key={i} cx={px} cy={py} r={shimR} fill={p.color} opacity={shimOp}/>;
         })}
 
-        {/* Frosted edge squares */}
-        {SQUARES.map((sq, i) => {
-          const bob  = Math.sin(t * Math.PI * 0.36 + sq.phase) * 8;
-          const sqOp = 0.36 + Math.sin(t * Math.PI * 0.26 + sq.phase) * 0.14;
-          const rx   = (sq as any).right ? W + sq.x : sq.x;
+        {/* Frosted squares — spawn, animate, hide, respawn at new grid cell */}
+        {Array.from({ length: SQ_COUNT }, (_, i) => {
+          // Each box is staggered so they don't all appear/disappear together
+          const stagger  = Math.round(i * SQ_TOTAL / SQ_COUNT);
+          const cycleT   = frame + stagger;
+          const cycleIdx = Math.floor(cycleT / SQ_TOTAL);
+          const lifeF    = cycleT % SQ_TOTAL;  // 0 → SQ_TOTAL-1
+
+          // Fade envelope (0→1 in, 1 flat, 1→0 out)
+          let env: number;
+          if      (lifeF < SQ_FADE)           env = lifeF / SQ_FADE;
+          else if (lifeF > SQ_FADE + SQ_LIFE) env = (SQ_TOTAL - lifeF) / SQ_FADE;
+          else                                 env = 1;
+          if (env <= 0) return null;
+
+          // Assign a unique grid cell per box per cycle.
+          // Multiplying i by 7 (coprime to SQ_COUNT=10) guarantees a full permutation,
+          // so no two boxes share a cell in the same cycle.
+          const cellIdx = (i * 7 + cycleIdx * 3) % SQ_COUNT;
+          const col     = cellIdx % SQ_COLS;
+          const row     = Math.floor(cellIdx / SQ_ROWS);
+          const cellW   = W / SQ_COLS;
+          const cellH   = H / SQ_ROWS;
+
+          // Random position within cell (seeded per box per cycle)
+          const seed    = cycleIdx * 19 + i * 5;
+          const size    = 44 + rng(seed + 2) * 52;        // 44–96 px
+          const margin  = size * 0.65;
+          const bx      = col * cellW + margin + rng(seed + 0) * (cellW - margin * 2);
+          const by      = row * cellH + margin + rng(seed + 1) * (cellH - margin * 2);
+
+          const bob   = Math.sin(t * Math.PI * 0.36 + SQ_PHASES[i]) * 9;
+          const sqOp  = env * (0.38 + Math.sin(t * Math.PI * 0.26 + SQ_PHASES[i]) * 0.14);
+
+          // Scale around box center so it pops in/out
+          const scale = 0.40 + env * 0.60;
+          const cx    = (bx + size / 2).toFixed(1);
+          const cy    = (by + bob + size / 2).toFixed(1);
+
           return (
-            <rect key={i}
-              x={rx} y={sq.y + bob} width={sq.s} height={sq.s} rx={10}
-              fill={`rgba(255,255,255,${sqOp.toFixed(3)})`}
-              stroke="rgba(255,255,255,0.82)" strokeWidth={1.5}/>
+            <g key={i} transform={`translate(${cx},${cy}) scale(${scale.toFixed(3)})`}>
+              <rect
+                x={(-size / 2).toFixed(1)} y={(-size / 2).toFixed(1)}
+                width={size} height={size} rx={11}
+                fill={`rgba(255,255,255,${sqOp.toFixed(3)})`}
+                stroke={`rgba(255,255,255,${(env * 0.82).toFixed(3)})`}
+                strokeWidth={1.5}
+              />
+            </g>
           );
         })}
 
@@ -189,12 +245,11 @@ export const PastelBackground: React.FC = () => {
           const perpX = -ndy, perpY = ndx;
           const hw    = star.tailHalfW * arc;  // half-width at head end, fades with arc
 
-          // Asteroid head radii
-          const coreR  = 18 * arc;   // bright inner core
-          const innerR = 36 * arc;   // medium glow ring
-          const outerR = 72 * arc;   // large soft halo
+          // Head radii — no sharp core, pure soft gradient stack
+          const glowR  = 155 * arc;  // main glow ball
+          const haloR  = 270 * arc;  // wide soft outer halo
 
-          // Tail path: pointed tip at (tx,ty) → widened base at head
+          // Tail path: pointed tip → wide base at head
           const tailPath = [
             `M ${tx.toFixed(1)} ${ty.toFixed(1)}`,
             `L ${(hx + perpX * hw).toFixed(1)} ${(hy + perpY * hw).toFixed(1)}`,
@@ -202,64 +257,50 @@ export const PastelBackground: React.FC = () => {
             'Z',
           ].join(' ');
 
-          const blurId    = `pbg-ast-blur-${si}`;
-          const blurBigId = `pbg-ast-blurbig-${si}`;
-          const tailGradId = `pbg-ast-tail-${si}`;
-          const headGradId = `pbg-ast-head-${si}`;
+          const blurSoftId  = `pbg-ast-bs-${si}`;  // stdDev 12 — tail + inner glow
+          const blurHaloId  = `pbg-ast-bh-${si}`;  // stdDev 28 — outer halo
+          const tailGradId  = `pbg-ast-tg-${si}`;
 
           return (
             <g key={si}>
               <defs>
-                {/* Tail gradient — transparent tip → glow color at base */}
+                {/* Tail — transparent tip → warm glow at base */}
                 <linearGradient id={tailGradId} gradientUnits="userSpaceOnUse"
                   x1={tx} y1={ty} x2={hx} y2={hy}>
-                  <stop offset="0%"   stopColor={star.colorGlow} stopOpacity="0"/>
-                  <stop offset="55%"  stopColor={star.colorGlow} stopOpacity={arc * 0.50}/>
-                  <stop offset="100%" stopColor={star.colorGlow} stopOpacity={arc * 0.85}/>
+                  <stop offset="0%"   stopColor={star.colorOuter} stopOpacity="0"/>
+                  <stop offset="45%"  stopColor={star.colorOuter} stopOpacity={arc * 0.35}/>
+                  <stop offset="82%"  stopColor={star.colorInner} stopOpacity={arc * 0.65}/>
+                  <stop offset="100%" stopColor={star.colorInner} stopOpacity={arc * 0.80}/>
                 </linearGradient>
 
-                {/* Head radial gradient — bright core → outer glow */}
-                <radialGradient id={headGradId} gradientUnits="userSpaceOnUse"
-                  cx={hx} cy={hy} r={outerR} fx={hx} fy={hy}>
-                  <stop offset="0%"   stopColor={star.colorCore} stopOpacity={arc * 1.0}/>
-                  <stop offset="25%"  stopColor={star.colorCore} stopOpacity={arc * 0.90}/>
-                  <stop offset="55%"  stopColor={star.colorGlow}  stopOpacity={arc * 0.55}/>
-                  <stop offset="100%" stopColor={star.colorGlow}  stopOpacity="0"/>
-                </radialGradient>
-
-                {/* Soft blur for tail and halo layers */}
-                <filter id={blurId} x="-60%" y="-60%" width="220%" height="220%">
-                  <feGaussianBlur stdDeviation="7"/>
+                <filter id={blurSoftId} x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="22"/>
                 </filter>
-
-                {/* Bigger blur for the outer pastel halo */}
-                <filter id={blurBigId} x="-100%" y="-100%" width="300%" height="300%">
-                  <feGaussianBlur stdDeviation="18"/>
+                <filter id={blurHaloId} x="-150%" y="-150%" width="400%" height="400%">
+                  <feGaussianBlur stdDeviation="50"/>
                 </filter>
               </defs>
 
-              {/* Layer 1: wide outer pastel halo (very blurred, subtle) */}
-              <circle cx={hx} cy={hy} r={outerR * 1.4}
-                fill={star.colorGlow} opacity={arc * 0.22}
-                filter={`url(#${blurBigId})`}/>
+              {/* Layer 1: massive outer pastel halo — very diffuse, matches bg glow style */}
+              <circle cx={hx} cy={hy} r={haloR}
+                fill={star.colorOuter} opacity={arc * 0.28}
+                filter={`url(#${blurHaloId})`}/>
 
-              {/* Layer 2: tail body — narrow triangle, blurred */}
+              {/* Layer 2: tail body — blurred triangle */}
               <path d={tailPath}
                 fill={`url(#${tailGradId})`}
-                filter={`url(#${blurId})`}/>
+                filter={`url(#${blurSoftId})`}/>
 
-              {/* Layer 3: head radial glow (medium blur) */}
-              <circle cx={hx} cy={hy} r={outerR}
-                fill={`url(#${headGradId})`}
-                filter={`url(#${blurId})`}/>
+              {/* Layer 3: main head glow — large, softly blurred, warm orange */}
+              {/* Same treatment as the orange cloud behind the Claude logo */}
+              <circle cx={hx} cy={hy} r={glowR}
+                fill={star.colorInner} opacity={arc * 0.42}
+                filter={`url(#${blurHaloId})`}/>
 
-              {/* Layer 4: inner glow ring (sharper) */}
-              <circle cx={hx} cy={hy} r={innerR}
-                fill={star.colorGlow} opacity={arc * 0.70}/>
-
-              {/* Layer 5: bright core (no blur — the "rock" point) */}
-              <circle cx={hx} cy={hy} r={coreR}
-                fill={star.colorCore} opacity={arc * 0.96}/>
+              {/* Layer 4: tighter inner glow — slightly more saturated, still soft */}
+              <circle cx={hx} cy={hy} r={glowR * 0.55}
+                fill={star.colorInner} opacity={arc * 0.38}
+                filter={`url(#${blurSoftId})`}/>
             </g>
           );
         })}
