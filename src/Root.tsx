@@ -2,6 +2,7 @@ import React from 'react';
 import { Composition } from 'remotion';
 import { IPhoneComposition, calculateMetadata } from './compositions/IPhone16Frame';
 import { ClaudeReadsFrames }                    from './compositions/ClaudeReadsFrames';
+import { CarouselBlueprint }                    from './compositions/CarouselBlueprint';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Root — registers all Remotion compositions
@@ -55,6 +56,28 @@ export const RemotionRoot: React.FC = () => (
       id="ClaudeReadsFrames"
       component={ClaudeReadsFrames}
       durationInFrames={2604}
+      fps={30}
+      width={1080}
+      height={1920}
+    />
+
+    {/*
+      ┌──────────────────────────────────────────────────────────────┐
+      │  Carousel Blueprint — 5-Slide AI Coding Carousel             │
+      │  1080 × 1920 @ 30 fps — 50 s (1500 frames)                  │
+      │                                                              │
+      │  Slide 1 (  0–299)  The Hook — AI didn't kill coding.        │
+      │  Slide 2 (288–587)  The Problem — AI-Generated Bloat         │
+      │  Slide 3 (576–875)  Architect First, Delegate Second         │
+      │  Slide 4 (864–1163) If You Can't Explain It, Don't Commit It │
+      │  Slide 5 (1152–1451) Coding is a Craft, Not a Prompt.        │
+      │  Edit:  src/compositions/CarouselBlueprint/                  │
+      └──────────────────────────────────────────────────────────────┘
+    */}
+    <Composition
+      id="CarouselBlueprint"
+      component={CarouselBlueprint}
+      durationInFrames={1500}
       fps={30}
       width={1080}
       height={1920}
