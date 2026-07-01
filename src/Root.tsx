@@ -3,6 +3,7 @@ import { Composition } from 'remotion';
 import { IPhoneComposition, calculateMetadata } from './compositions/IPhone16Frame';
 import { ClaudeReadsFrames }                    from './compositions/ClaudeReadsFrames';
 import { CarouselBlueprint }                    from './compositions/CarouselBlueprint';
+import { StartupMistakes }                      from './compositions/StartupMistakes';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Root — registers all Remotion compositions
@@ -78,6 +79,31 @@ export const RemotionRoot: React.FC = () => (
       id="CarouselBlueprint"
       component={CarouselBlueprint}
       durationInFrames={1500}
+      fps={30}
+      width={1080}
+      height={1920}
+    />
+
+    {/*
+      ┌──────────────────────────────────────────────────────────────┐
+      │  5 Startup Mistakes — 8-Slide Carousel                       │
+      │  1080 × 1920 @ 30 fps — 80 s (2400 frames)                  │
+      │                                                              │
+      │  Slide 1  Cover              5 Software Mistakes             │
+      │  Slide 2  Mistake #1         Building Features Nobody Asked  │
+      │  Slide 3  Mistake #2         Ignoring User Feedback          │
+      │  Slide 4  Mistake #3         Speed Over Architecture         │
+      │  Slide 5  Mistake #4         No Analytics, No Visibility     │
+      │  Slide 6  Mistake #5         Treating Software As A Cost     │
+      │  Slide 7  Solution           Build Systems. Not Features.    │
+      │  Slide 8  CTA                What Should You Automate First? │
+      │  Edit:  src/compositions/StartupMistakes/                    │
+      └──────────────────────────────────────────────────────────────┘
+    */}
+    <Composition
+      id="5StartupMistakes"
+      component={StartupMistakes}
+      durationInFrames={2400}
       fps={30}
       width={1080}
       height={1920}
